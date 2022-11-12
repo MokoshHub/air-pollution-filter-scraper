@@ -1,6 +1,7 @@
 import time, os, requests, wget
 from tqdm import tqdm
 import jsonlines, csv
+from datetime import datetime, timedelta
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -47,7 +48,7 @@ def clean_data(date, data_path="pms_data"):
                     single_sensor_file = csv.reader(csv_file, delimiter=';')
                     next(single_sensor_file) # skip first line
                     for row in tqdm(single_sensor_file, leave=False):
-                        with jsonlines.open(os.path.join(data_path, 'pera' + '.jsonl'), mode='a') as writer:
+                        with jsonlines.open(os.path.join(data_path, 'mika' + '.jsonl'), mode='a') as writer:
                             sensor_id = row[0]
                             timestamp = row[5]
                             lat = row[3]
@@ -67,17 +68,17 @@ def clean_data(date, data_path="pms_data"):
 
 def get_sensors_last_five_mins(data_path):
     # past 5 minutes URL
-    # curl https://data.sensor.community/airrohr/v1/filter/type=SDS011/
+    # https://data.sensor.community/airrohr/v1/filter/type=SDS011/
     past_5_mins_url = 'https://data.sensor.community/airrohr/v1/filter/type=SDS011'
     response = requests.get(past_5_mins_url)
     data = response.json()
     
     # change to append mode when script is running autonomously
-    with jsonlines.open(os.path.join(data_path, 'mika' + '.jsonl'), mode='w') as writer:
+    with jsonlines.open(os.path.join(data_path, 'mika' + '.jsonl'), mode='a') as writer:
         for entry in data:
             sensor_id = entry['sensor']['id']
             # timestamp is 1 hour behind
-            timestamp = entry['timestamp']
+            timestamp = str(fix_timestamp(entry['timestamp']))
             lat = entry['location']['latitude']
             lon = entry['location']['longitude']
             
@@ -107,13 +108,44 @@ def get_sensors_last_five_mins(data_path):
                     'P2': p2
                 })
 
+def clean_old_sensors(DATA_PATH):
+    # delete sensor data from more than 48h ago
+    with jsonlines.open(os.path.join(DATA_PATH, 'mika' + '.jsonl'), mode='r') as reader:
+        fresh_lines = []
+        for entry in reader:
+            fresh_lines.append(entry)
+
+    with jsonlines.open(os.path.join(DATA_PATH, 'mika' + '.jsonl'), mode='w') as updater:
+        for entry in fresh_lines:
+            timestamp = datetime.strptime(entry['timestamp'], '%Y-%m-%d %H:%M:%S')
+            current_time = datetime.now()
+            if not current_time - timestamp > timedelta(hours=48):
+                updater.write(entry)
+
+def fix_timestamp(timestamp):
+    # check if timestamp 1 hour behind
+    # if so, add 1 hour
+    # else, return timestamp
+    timestamp = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S')
+    current_time = datetime.now()
+
+    if timestamp.hour == current_time.hour - 1:
+        timestamp = timestamp + timedelta(hours=1)
+        return timestamp.strftime('%Y-%m-%d %H:%M:%S')
+    else:
+        return timestamp.strftime('%Y-%m-%d %H:%M:%S')
+
 def main():
-    DATA_PATH = '.\\pms_data'
-    DATE = '2022-11-10'
+    DATA_PATH = './pms_data'
+    # DATE = '2022-11-10'
+
+    if not os.path.exists(DATA_PATH):
+        os.makedirs(DATA_PATH)
 
     # download_data_by_date(DATE, DATA_PATH)
     # clean_data(DATE, DATA_PATH)
     get_sensors_last_five_mins(DATA_PATH)
+    clean_old_sensors(DATA_PATH)
 
 if __name__ == "__main__":
     main()
