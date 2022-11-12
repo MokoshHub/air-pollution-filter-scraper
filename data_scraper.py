@@ -6,6 +6,8 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from pyspark.sql import SparkSession
+from gcloud import storage
+from oauth2client.service_account import ServiceAccountCredentials
 
 def download_data_by_date(date, data_path="pms_data"):
     # DATE = '2022-11-10'
@@ -135,6 +137,13 @@ def fix_timestamp(timestamp):
     else:
         return timestamp.strftime('%Y-%m-%d %H:%M:%S')
 
+def push_data_to_bucket(DATA_PATH):
+    # push data to bucket
+    client = storage.Client.from_service_account_json('creds.json')
+    bucket = client.get_bucket('mika_air_quality')
+    blob = bucket.blob('mika.jsonl')
+    blob.upload_from_filename(os.path.join(DATA_PATH, 'mika' + '.jsonl'))
+
 def main():
     DATA_PATH = './pms_data'
     # DATE = '2022-11-10'
@@ -146,6 +155,7 @@ def main():
     # clean_data(DATE, DATA_PATH)
     get_sensors_last_five_mins(DATA_PATH)
     clean_old_sensors(DATA_PATH)
+    push_data_to_bucket(DATA_PATH)
 
 if __name__ == "__main__":
     main()
