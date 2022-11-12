@@ -87,6 +87,10 @@ def get_sensors_last_five_mins(data_path):
                     p1 = entry['sensordatavalues'][0]['value']
                 elif entry['sensordatavalues'][1]['value_type'] == 'P1':
                     p1 = entry['sensordatavalues'][1]['value']
+
+                # remove outliers from data
+                if float(p1) >= 1999.90:
+                    p1 = None
             except:
                 p1 = None
 
@@ -95,6 +99,10 @@ def get_sensors_last_five_mins(data_path):
                     p2 = entry['sensordatavalues'][0]['value']
                 elif entry['sensordatavalues'][1]['value_type'] == 'P2':
                     p2 = entry['sensordatavalues'][1]['value']
+
+                # remove outliers from data
+                if float(p2) >= 999.90:
+                    p2 = None
             except:
                 p2 = None
 
@@ -140,6 +148,7 @@ def push_data_to_bucket(DATA_PATH):
     client = storage.Client.from_service_account_json('creds.json')
     bucket = client.get_bucket('mika_air_quality')
     blob = bucket.blob('mika.jsonl')
+    blob.cache_control = 'no-cache'
     blob.upload_from_filename(os.path.join(DATA_PATH, 'mika' + '.jsonl'))
 
 def main():
