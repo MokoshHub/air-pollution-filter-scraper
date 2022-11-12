@@ -5,9 +5,7 @@ from datetime import datetime, timedelta
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
-from pyspark.sql import SparkSession
 from gcloud import storage
-from oauth2client.service_account import ServiceAccountCredentials
 
 def download_data_by_date(date, data_path="pms_data"):
     # DATE = '2022-11-10'
