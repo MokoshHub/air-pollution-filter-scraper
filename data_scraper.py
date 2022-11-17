@@ -78,7 +78,8 @@ def get_sensors_last_five_mins(data_path):
         for entry in data:
             sensor_id = entry['sensor']['id']
             # timestamp is 1 hour behind
-            timestamp = str(fix_timestamp(entry['timestamp']))
+            # timestamp = str(fix_timestamp(entry['timestamp']))
+            timestamp = entry['timestamp']
             lat = entry['location']['latitude']
             lon = entry['location']['longitude']
             
@@ -126,7 +127,7 @@ def clean_old_sensors(DATA_PATH):
     with jsonlines.open(os.path.join(DATA_PATH, 'mika' + '.jsonl'), mode='w') as updater:
         for entry in fresh_lines:
             timestamp = datetime.strptime(entry['timestamp'], '%Y-%m-%d %H:%M:%S')
-            current_time = datetime.now()
+            current_time = datetime.utcnow()
             if not current_time - timestamp > timedelta(hours=48):
                 updater.write(entry)
 
