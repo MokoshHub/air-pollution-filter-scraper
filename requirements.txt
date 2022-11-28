@@ -2,7 +2,6 @@ async-generator==1.10
 attrs==22.1.0
 beautifulsoup4==4.11.1
 cachetools==5.2.0
-certifi @ file:///croot/certifi_1665076670883/work/certifi
 cffi==1.15.1
 charset-normalizer==2.1.1
 colorama==0.4.6

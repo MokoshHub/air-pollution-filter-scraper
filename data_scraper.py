@@ -7,6 +7,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from gcloud import storage
 
+os.environ.setdefault("GCLOUD_PROJECT", "air-pollution-filter-website")
 
 def download_data_by_date(date, data_path="pms_data"):
     # DATE = '2022-11-10'
@@ -182,7 +183,7 @@ def main():
     # clean_data(DATE, DATA_PATH)
     get_sensors_last_five_mins(DATA_PATH)
     clean_old_sensors(DATA_PATH)
-    push_data_to_bucket(DATA_PATH)
+    # push_data_to_bucket(DATA_PATH)
 
 
 if __name__ == "__main__":
